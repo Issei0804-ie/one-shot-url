@@ -63,6 +63,17 @@ func TestDB_SearchLongURL(t *testing.T) {
 			wantLongURL: "https://example.com",
 			wantErr:     false,
 		},
+		{
+			name: "存在しない shortURL を使用した異常系テスト",
+			fields: fields{
+				db: db.db,
+			},
+			args: args{
+				shortURL: "00000000",
+			},
+			wantLongURL: "",
+			wantErr:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
