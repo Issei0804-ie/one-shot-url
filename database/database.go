@@ -86,7 +86,7 @@ func (d DB) Store(longURL string, shortURL string) error {
 
 func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
 	tableName := d.makeTableName(shortURL)
-	row, err := sq.Select("long_url").From(tableName).RunWith(d.db).Query()
+	row, err := sq.Select("long_url").From(tableName).Where("short_url = ?", shortURL).RunWith(d.db).Query()
 	if err != nil {
 		return "", err
 	}
@@ -102,7 +102,7 @@ func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
 
 func (d DB) IsExistShortUrl(shortURL string) bool {
 	tableName := d.makeTableName(shortURL)
-	row, err := sq.Select("long_url").From(tableName).Where("shortURL = ?", shortURL).Limit(1).RunWith(d.db).Query()
+	row, err := sq.Select("long_url").From(tableName).Where("short_url = ?", shortURL).Limit(1).RunWith(d.db).Query()
 	if err != nil {
 		log.Println(err.Error())
 		return false
