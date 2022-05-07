@@ -1,27 +1,18 @@
 package main
 
 import (
-	"github.com/joho/godotenv"
 	"log"
 	"one-shot-url/api"
 	"one-shot-url/database"
-	"path/filepath"
-	"runtime"
+	"one-shot-url/util"
 )
 
 func main() {
-	_, pwd, _, _ := runtime.Caller(0)
+	util.InitEnv()
+	util.InitLog()
 
-	dir := filepath.Dir(pwd)
-	log.Println(dir)
-	err := godotenv.Load(dir + "/.env")
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.SetFlags(log.Ltime | log.Llongfile)
-
-	db := database.NewDB()
-	err = db.Store("aaaaa", "aaaaaa")
+	db := database.NewDB(false)
+	err := db.Store("aaaaa", "aaaaaa")
 	if err != nil {
 		log.Printf(err.Error())
 	}
