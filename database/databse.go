@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	sq "github.com/Masterminds/squirrel"
 	"time"
 
@@ -12,27 +13,49 @@ import (
 
 type Interactor interface {
 	Store(longURL string, shortURL string) error
-	SearchLongURL(shortURL string) (longURL string)
-	SearchShortURL(longURL string) (shortURL string)
+	SearchLongURL(shortURL string) (longURL string, err error)
+	SearchShortURL(longURL string) (shortURL string, err error)
 }
 
-func NewDB() *DB {
-
-	log.Println("connect RDB now...")
-	address := os.Getenv("DB_ADDRESS")
-	log.Println("RDB address is " + address)
-	port := os.Getenv("DB_PORT")
-	log.Println("RDB port is " + port)
-	addr := address + ":" + port
-	cfg := mysql.Config{
-		User:   os.Getenv("DB_USER"),
-		Passwd: os.Getenv("DB_USER_PASSWORD"),
-		Net:    "tcp",
-		Addr:   addr,
-		DBName: os.Getenv("DB_NAME"),
+func NewDB(isTest bool) *DB {
+	var address, port, addr, user, passwd, dbName string
+	if isTest {
+		address = os.Getenv("TEST_DB_ADDRESS")
+		port = os.Getenv("TEST_DB_PORT")
+		addr = address + ":" + port
+		user = os.Getenv("TEST_DB_USER")
+		passwd = os.Getenv("TEST_DB_USER_PASSWORD")
+		dbName = os.Getenv("TEST_DB_NAME")
+	} else {
+		address = os.Getenv("DB_ADDRESS")
+		port = os.Getenv("DB_PORT")
+		addr = address + ":" + port
+		user = os.Getenv("DB_USER")
+		passwd = os.Getenv("DB_USER_PASSWORD")
+		dbName = os.Getenv("DB_NAME")
 	}
 
+	log.Println("RDB config is below.")
+	log.Println("address is " + address)
+	log.Println("port is " + port)
+	log.Println("user is " + user)
+	log.Println("db name is " + dbName)
+
+	cfg := mysql.Config{
+		User:   user,
+		Passwd: passwd,
+		Net:    "tcp",
+		Addr:   addr,
+		DBName: dbName,
+	}
+
+	log.Println("connect RDB now...")
 	db, err := sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,10 +69,9 @@ type DB struct {
 }
 
 func (d DB) Store(longURL string, shortURL string) error {
-	tableNameHead := shortURL[0:2]
-	tableName := tableNameHead + "_urls"
+	tableName := d.makeTableName(shortURL)
 	if !d.isExistTable(tableName) {
-		err := d.makeTable(tableName)
+		err := d.createTable(tableName)
 		if err != nil {
 			return err
 		}
@@ -62,17 +84,33 @@ func (d DB) Store(longURL string, shortURL string) error {
 	return nil
 }
 
-func (d DB) SearchLongURL(shortURL string) (longURL string) {
-	//TODO implement me
-	panic("implement me")
+func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
+	tableName := d.makeTableName(shortURL)
+	row, err := sq.Select("long_url").From(tableName).RunWith(d.db).Query()
+	if err != nil {
+		return "", err
+	}
+	row.Next()
+	err = row.Scan(&longURL)
+	if err != nil {
+		log.Println(err.Error())
+		return "", errors.New("database error")
+	}
+
+	return longURL, nil
 }
 
-func (d DB) SearchShortURL(longURL string) (shortURL string) {
-	//TODO implement me
-	panic("implement me")
+func (d DB) IsExistShortUrl(shortURL string) bool {
+	tableName := d.makeTableName(shortURL)
+	row, err := sq.Select("long_url").From(tableName).Where("shortURL = ?", shortURL).Limit(1).RunWith(d.db).Query()
+	if err != nil {
+		log.Println(err.Error())
+		return false
+	}
+	return row.Next()
 }
 
-func (d DB) makeTable(tableName string) error {
+func (d DB) createTable(tableName string) error {
 	// SQL インジェクション が行える可能性があるため後ほど確認 or 書き換えましょう
 	query := "CREATE TABLE " + tableName + " (id int NOT NULL PRIMARY KEY AUTO_INCREMENT, long_url varchar(1000), short_url VARCHAR(100), updated_at DATETIME, created_at DATETIME, deleted_at DATETIME)"
 	_, err := d.db.Exec(query)
@@ -83,6 +121,12 @@ func (d DB) makeTable(tableName string) error {
 	}
 
 	return nil
+}
+
+func (d DB) makeTableName(shortURL string) string {
+	tableNameHead := shortURL[0:2]
+	tableName := tableNameHead + "_urls"
+	return tableName
 }
 
 func (d DB) isExistTable(tableName string) bool {
