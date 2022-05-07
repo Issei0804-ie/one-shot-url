@@ -91,3 +91,56 @@ func TestDB_SearchLongURL(t *testing.T) {
 		})
 	}
 }
+
+func TestDB_IsExistShortUrl(t *testing.T) {
+	db := NewDB(true)
+	err := FlashTestData(db.db)
+	if err != nil {
+		t.Fatalf(err.Error())
+		return
+	}
+
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
+		shortURL string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "存在する shortURL を使用した正常系テスト",
+			fields: fields{
+				db: db.db,
+			},
+			args: args{
+				shortURL: "00bgtuq2",
+			},
+			want: true,
+		},
+		{
+			name: "存在しない shortURL を使用した異常系テスト",
+			fields: fields{
+				db: db.db,
+			},
+			args: args{
+				shortURL: "11110000",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := DB{
+				db: tt.fields.db,
+			}
+			if got := d.IsExistShortUrl(tt.args.shortURL); got != tt.want {
+				t.Errorf("IsExistShortUrl() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
