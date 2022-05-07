@@ -135,7 +135,7 @@ func (d DB) makeTableName(shortURL string) string {
 }
 
 func (d DB) isExistTable(tableName string) bool {
-	query := "SELECT id FROM " + tableName + " LIMIT 1"
+	query := "SELECT id FROM " + tableName + " LIMIT 1;"
 	_, err := d.db.Exec(query)
 	if err != nil {
 		log.Println(tableName + " is not exist")
