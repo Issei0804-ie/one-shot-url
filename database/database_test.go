@@ -13,7 +13,7 @@ func TestMain(m *testing.M) {
 
 	db := NewDB(true)
 	log.Println("flash database")
-	err := FlashTestData(db.db)
+	err := FlashTestData(db.GetDB())
 	if err != nil {
 		log.Fatalln(err.Error())
 		return
@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 	log.Println("finish test")
 	log.Println("flash database")
-	err = FlashTestData(db.db)
+	err = FlashTestData(db.GetDB())
 	if err != nil {
 		log.Fatalln(err.Error())
 		return
@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 
 func TestDB_SearchLongURL(t *testing.T) {
 	db := NewDB(true)
-	err := FlashTestData(db.db)
+	err := FlashTestData(db.GetDB())
 	if err != nil {
 		t.Fatalf(err.Error())
 		return
@@ -55,7 +55,7 @@ func TestDB_SearchLongURL(t *testing.T) {
 		{
 			name: "存在する shortURL を使用した正常系テスト",
 			fields: fields{
-				db: db.db,
+				db: db.GetDB(),
 			},
 			args: args{
 				shortURL: "00hu8jgt",
@@ -66,7 +66,7 @@ func TestDB_SearchLongURL(t *testing.T) {
 		{
 			name: "存在しない shortURL を使用した異常系テスト",
 			fields: fields{
-				db: db.db,
+				db: db.GetDB(),
 			},
 			args: args{
 				shortURL: "00000000",
@@ -94,7 +94,7 @@ func TestDB_SearchLongURL(t *testing.T) {
 
 func TestDB_IsExistShortUrl(t *testing.T) {
 	db := NewDB(true)
-	err := FlashTestData(db.db)
+	err := FlashTestData(db.GetDB())
 	if err != nil {
 		t.Fatalf(err.Error())
 		return
@@ -115,7 +115,7 @@ func TestDB_IsExistShortUrl(t *testing.T) {
 		{
 			name: "存在する shortURL を使用した正常系テスト",
 			fields: fields{
-				db: db.db,
+				db: db.GetDB(),
 			},
 			args: args{
 				shortURL: "00bgtuq2",
@@ -125,7 +125,7 @@ func TestDB_IsExistShortUrl(t *testing.T) {
 		{
 			name: "存在しない shortURL を使用した異常系テスト",
 			fields: fields{
-				db: db.db,
+				db: db.GetDB(),
 			},
 			args: args{
 				shortURL: "11110000",

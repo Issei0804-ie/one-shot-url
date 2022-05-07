@@ -14,10 +14,10 @@ import (
 type Interactor interface {
 	Store(longURL string, shortURL string) error
 	SearchLongURL(shortURL string) (longURL string, err error)
-	SearchShortURL(longURL string) (shortURL string, err error)
+	GetDB() *sql.DB
 }
 
-func NewDB(isTest bool) *DB {
+func NewDB(isTest bool) Interactor {
 	var address, port, addr, user, passwd, dbName string
 	if isTest {
 		address = os.Getenv("TEST_DB_ADDRESS")
@@ -61,7 +61,7 @@ func NewDB(isTest bool) *DB {
 	}
 
 	log.Println("connected RDB.")
-	return &DB{db: db}
+	return DB{db: db}
 }
 
 type DB struct {
@@ -108,6 +108,10 @@ func (d DB) IsExistShortUrl(shortURL string) bool {
 		return false
 	}
 	return row.Next()
+}
+
+func (d DB) GetDB() *sql.DB {
+	return d.db
 }
 
 func (d DB) createTable(tableName string) error {
