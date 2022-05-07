@@ -3,13 +3,17 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"one-shot-url/database"
+	"one-shot-url/short"
 	"strconv"
 )
 
-func NewAPI() API {
+func NewAPI(short short.Shorter, db database.Interactor) API {
 	r := gin.Default()
 	api := API{
-		r: r,
+		r:          r,
+		Shorter:    short,
+		Interactor: db,
 	}
 	api.setRoute()
 	return api
@@ -17,10 +21,35 @@ func NewAPI() API {
 
 type API struct {
 	r *gin.Engine
+	short.Shorter
+	database.Interactor
 }
 
 func (api API) short(c *gin.Context) {
-	c.JSON(http.StatusOK, map[string]string{"message": "ok"})
+	req := struct {
+		Url string `json:"url"`
+	}{
+		Url: "",
+	}
+
+	err := c.BindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, map[string]string{"message": "invalid json."})
+		return
+	}
+
+	if req.Url == "" {
+		c.JSON(http.StatusBadRequest, map[string]string{"message": "you should set url."})
+		return
+	}
+
+	short := api.Shorter.Generate()
+	err = api.Interactor.Store(req.Url, short)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, map[string]string{"message": "server error."})
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{"short_url": short})
 }
 
 func (api API) decrypt(c *gin.Context) {

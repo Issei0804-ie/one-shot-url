@@ -15,6 +15,7 @@ type Interactor interface {
 	Store(longURL string, shortURL string) error
 	SearchLongURL(shortURL string) (longURL string, err error)
 	GetDB() *sql.DB
+	IsExistShortUrl(shortURL string) bool
 }
 
 func NewDB(isTest bool) Interactor {
@@ -137,7 +138,7 @@ func (d DB) isExistTable(tableName string) bool {
 	query := "SELECT id FROM " + tableName + " LIMIT 1"
 	_, err := d.db.Exec(query)
 	if err != nil {
-		log.Println(tableName + "is not exist")
+		log.Println(tableName + " is not exist")
 		return false
 	}
 	return true

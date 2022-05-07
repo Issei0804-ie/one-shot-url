@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"one-shot-url/api"
 	"one-shot-url/database"
+	"one-shot-url/short"
 	"one-shot-url/util"
 )
 
@@ -12,11 +12,7 @@ func main() {
 	util.InitLog()
 
 	db := database.NewDB(false)
-	err := db.Store("aaaaa", "aaaaaa")
-	if err != nil {
-		log.Printf(err.Error())
-	}
-
-	api := api.NewAPI()
+	s := short.NewShort(db.IsExistShortUrl)
+	api := api.NewAPI(s, db)
 	api.Run(8080)
 }
