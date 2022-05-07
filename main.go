@@ -27,5 +27,5 @@ func main() {
 	}
 
 	api := api.NewAPI()
-	api.Run(80)
+	api.Run(8080)
 }
