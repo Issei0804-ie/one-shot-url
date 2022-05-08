@@ -5,6 +5,8 @@ services:
     container_name: db
     ports:
       - 3306:3306
+    expose:
+      - 3306
     volumes:
       - ./DB/data:/var/lib/mysql
       - ./DB/init:/docker-entrypoint-initdb.d
@@ -16,3 +18,14 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - TZ=Asia/Tokyo
     tty: true
+
+  backend:
+    build: ./
+    container_name: go-api
+    ports:
+      - 8080:8080
+    volumes:
+      - ./:/go/src
+    links:
+      - db
+

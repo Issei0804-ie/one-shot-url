@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"one-shot-url/database"
 	"one-shot-url/short"
@@ -9,6 +10,7 @@ import (
 )
 
 func NewAPI(short short.Shorter, db database.Interactor) API {
+	gin.DefaultWriter = log.Writer()
 	r := gin.Default()
 	api := API{
 		r:          r,
