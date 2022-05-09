@@ -44,7 +44,7 @@ Content-Length: 24
 {"short_url":"28uSuqZd"}%
 ```
 
-5. 勿論, code からコード化された URL を復元することもできます．
+5. 勿論, code から URL を復元することもできます．
 
 ```
 $ curl -i localhost:8080/28uSuqZd
