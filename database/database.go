@@ -91,7 +91,9 @@ func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
 	if err != nil {
 		return "", err
 	}
-	row.Next()
+	if !row.Next() {
+		return "", errors.New(shortURL + " is not found in database.")
+	}
 	err = row.Scan(&longURL)
 	if err != nil {
 		log.Println(err.Error())

@@ -55,11 +55,23 @@ func (api API) short(c *gin.Context) {
 }
 
 func (api API) decrypt(c *gin.Context) {
-	c.JSON(http.StatusOK, map[string]string{"message": "ok"})
+	code := c.Param("code")
+	if code == "" {
+		c.JSON(http.StatusBadRequest, map[string]string{"message": "you should set code.\n ex) http://localhost/(code)"})
+		return
+	}
+
+	longURL, err := api.Interactor.SearchLongURL(code)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, map[string]string{"message": "this URL has not been generated."})
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]string{"message": longURL})
 }
 func (api API) setRoute() {
 	api.r.POST("/short", api.short)
-	api.r.GET("/", api.decrypt)
+	api.r.GET("/:code", api.decrypt)
 }
 func (api API) Run(port int) error {
 	address := ":" + strconv.Itoa(port)
