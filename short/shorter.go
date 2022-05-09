@@ -24,9 +24,13 @@ type Short struct {
 }
 
 func (s *Short) Generate() string {
-	s.k = ksuid.New()
-	randomId := s.k.String()
-	log.Println("randomID is " + randomId)
-	short := randomId[0:8]
-	return short
+	for {
+		s.k = ksuid.New()
+		randomId := s.k.String()
+		log.Println("randomID is " + randomId)
+		short := randomId[0:8]
+		if !s.isExist(short) {
+			return short
+		}
+	}
 }
