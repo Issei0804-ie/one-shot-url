@@ -3,6 +3,7 @@ package database
 import (
 	"errors"
 	sq "github.com/Masterminds/squirrel"
+	"sync"
 	"time"
 
 	"database/sql"
@@ -62,11 +63,31 @@ func NewDB(isTest bool) Interactor {
 	}
 
 	log.Println("connected RDB.")
-	return DB{db: db}
+	now := time.Now()
+	var t []table
+	mu := sync.Mutex{}
+	return DB{
+		db:             db,
+		lastInsertTime: &now,
+		tables:         &t,
+		mu:             &mu,
+	}
 }
 
 type DB struct {
-	db *sql.DB
+	db             *sql.DB
+	lastInsertTime *time.Time
+	tables         *[]table
+	mu             *sync.Mutex
+}
+
+type table struct {
+	tableName string
+	longURL   string
+	shortURL  string
+	updatedAt time.Time
+	createdAt time.Time
+	deletedAt *time.Time
 }
 
 func (d DB) Store(longURL string, shortURL string) error {
@@ -77,12 +98,73 @@ func (d DB) Store(longURL string, shortURL string) error {
 			return err
 		}
 	}
-	_, err := sq.Insert(tableName).Columns("long_url", "short_url", "updated_at", "created_at", "deleted_at").
-		Values(longURL, shortURL, time.Now(), time.Now(), nil).RunWith(d.db).Exec()
-	if err != nil {
-		return err
+
+	t := table{
+		tableName: tableName,
+		longURL:   longURL,
+		shortURL:  shortURL,
+		updatedAt: time.Now(),
+		createdAt: time.Now(),
+		deletedAt: nil,
+	}
+	return d.bulkInsert(t)
+
+}
+
+func (d DB) bulkInsert(tt table) error {
+	d.mu.Lock()
+	*d.tables = append(*d.tables, tt)
+	if len(*d.tables) >= 10 {
+		log.Println("start bulk insert")
+		tx, err := d.db.Begin()
+		if err != nil {
+			log.Println(err.Error())
+			d.mu.Unlock()
+			return errors.New("can not start transaction. this is database error")
+		}
+		for _, t := range *d.tables {
+			_, err = sq.Insert(t.tableName).Columns("long_url", "short_url", "updated_at", "created_at", "deleted_at").
+				Values(t.longURL, t.shortURL, time.Now(), time.Now(), nil).RunWith(tx).Exec()
+			if err != nil {
+				log.Println(err.Error())
+				tx.Rollback()
+				d.mu.Unlock()
+				return errors.New("bulk insert error")
+			}
+		}
+		err = tx.Commit()
+		if err != nil {
+			log.Println(err.Error())
+			d.mu.Unlock()
+			return errors.New("transaction error")
+		}
+		log.Println("bulk insert !!")
+		*d.tables = []table{}
+		d.mu.Unlock()
+	} else {
+		d.mu.Unlock()
+		time.Sleep(time.Second * 1)
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		if d.isInTables(tt.shortURL) {
+			_, err := sq.Insert(tt.tableName).Columns("long_url", "short_url", "updated_at", "created_at", "deleted_at").Values(tt.longURL, tt.shortURL, time.Now(), time.Now(), nil).RunWith(d.db).Exec()
+			if err != nil {
+				log.Println(err)
+				return errors.New("insert error")
+			}
+			*d.tables = removeTable(*d.tables, tt)
+		}
 	}
 	return nil
+}
+
+func (d DB) isInTables(shortURL string) bool {
+	for _, t := range *d.tables {
+		if shortURL == t.shortURL {
+			return true
+		}
+	}
+	return false
 }
 
 func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
@@ -144,4 +226,32 @@ func (d DB) isExistTable(tableName string) bool {
 		return false
 	}
 	return true
+}
+
+// tables の中から table.tableName を unique なリストで返します．
+func uniqueTableNames(tables []table) []string {
+	var tableNames []string
+	for _, t := range tables {
+		if tableNames == nil {
+			tableNames = append(tableNames, t.tableName)
+			continue
+		}
+		for _, tableName := range tableNames {
+			if tableName == t.tableName {
+				continue
+			}
+		}
+		tableNames = append(tableNames, t.tableName)
+	}
+	return tableNames
+}
+
+func removeTable(source []table, target table) []table {
+	var newTable []table
+	for _, t := range source {
+		if t.shortURL != target.shortURL {
+			newTable = append(newTable, t)
+		}
+	}
+	return newTable
 }
