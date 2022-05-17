@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"one-shot-url/api"
-	"one-shot-url/database"
+	"one-shot-url/database/rdb"
 	"one-shot-url/short"
 	"one-shot-url/util"
 	"os"
@@ -19,7 +19,7 @@ func main() {
 		log.Fatalln("can not get a port number that environment value. did you modify .env?")
 	}
 
-	db := database.NewRDB(false)
+	db := rdb.NewRDB(false)
 	s := short.NewShort(db.IsExistShortUrl)
 	api := api.NewAPI(s, db, port)
 	api.Run(port)

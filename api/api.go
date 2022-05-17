@@ -5,13 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"one-shot-url/database"
+	"one-shot-url/database/rdb"
 	"one-shot-url/short"
 	"os"
 	"strconv"
 )
 
-func NewAPI(short short.Shorter, db database.Interactor, port int) API {
+func NewAPI(short short.Shorter, db rdb.Interactor, port int) API {
 	gin.DefaultWriter = log.Writer()
 	r := gin.Default()
 
@@ -43,7 +43,7 @@ func NewAPI(short short.Shorter, db database.Interactor, port int) API {
 type API struct {
 	r *gin.Engine
 	short.Shorter
-	database.Interactor
+	rdb.Interactor
 	Domain        string
 	Protocol      string
 	Port          int

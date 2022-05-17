@@ -11,7 +11,7 @@ func TestMain(m *testing.M) {
 	util.InitEnv()
 	util.InitLog()
 
-	db := NewDB(true)
+	db := NewRDB(true)
 	log.Println("flash database")
 	err := FlashTestData(db.GetDB())
 	if err != nil {
@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestDB_SearchLongURL(t *testing.T) {
-	db := NewDB(true)
+	db := NewRDB(true)
 	err := FlashTestData(db.GetDB())
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -93,7 +93,7 @@ func TestDB_SearchLongURL(t *testing.T) {
 }
 
 func TestDB_IsExistShortUrl(t *testing.T) {
-	db := NewDB(true)
+	db := NewRDB(true)
 	err := FlashTestData(db.GetDB())
 	if err != nil {
 		t.Fatalf(err.Error())
