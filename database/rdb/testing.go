@@ -1,4 +1,4 @@
-package database
+package rdb
 
 import (
 	"database/sql"
@@ -24,7 +24,7 @@ func FlashTestData(d *sql.DB) error {
 
 func addTestData(d *sql.DB) error {
 	s := sqlfile.New()
-	err := s.File("./../DB/test-data.sql")
+	err := s.File("./../../DB/test-data.sql")
 	if err != nil {
 		return err
 	}
