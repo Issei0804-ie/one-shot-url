@@ -1,8 +1,8 @@
 version: '3'
 services:
-  db:
+  rdb:
     image: mysql:latest
-    container_name: db
+    container_name: rdb
     ports:
       - 3306:3306
     expose:
@@ -12,10 +12,10 @@ services:
       - ./DB/init:/docker-entrypoint-initdb.d
       - ./DB/config:/etc/mysql/conf.d
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-      - MYSQL_USER=${DB_USER}
-      - MYSQL_PASSWORD=${DB_USER_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_ROOT_PASSWORD=${RDB_ROOT_PASSWORD}
+      - MYSQL_USER=${RDB_USER}
+      - MYSQL_PASSWORD=${RDB_USER_PASSWORD}
+      - MYSQL_DATABASE=${RDB_NAME}
       - TZ=Asia/Tokyo
     tty: true
 
@@ -27,5 +27,4 @@ services:
     volumes:
       - ./:/go/src
     links:
-      - db
-
+      - rdb

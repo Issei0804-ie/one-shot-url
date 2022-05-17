@@ -18,4 +18,4 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 RUN  curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b /usr/local/bin
 
-CMD dockerize -wait tcp://db:3306 `cd /go/src && go run main.go`
+CMD dockerize -wait tcp://rdb:3306 `cd /go/src && go run main.go`

@@ -19,7 +19,7 @@ func main() {
 		log.Fatalln("can not get a port number that environment value. did you modify .env?")
 	}
 
-	db := database.NewDB(false)
+	db := database.NewRDB(false)
 	s := short.NewShort(db.IsExistShortUrl)
 	api := api.NewAPI(s, db, port)
 	api.Run(port)

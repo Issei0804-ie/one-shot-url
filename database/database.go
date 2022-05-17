@@ -18,22 +18,22 @@ type Interactor interface {
 	IsExistShortUrl(shortURL string) bool
 }
 
-func NewDB(isTest bool) Interactor {
+func NewRDB(isTest bool) Interactor {
 	var address, port, addr, user, passwd, dbName string
 	if isTest {
-		address = os.Getenv("TEST_DB_ADDRESS")
-		port = os.Getenv("TEST_DB_PORT")
+		address = os.Getenv("TEST_RDB_ADDRESS")
+		port = os.Getenv("TEST_RDB_PORT")
 		addr = address + ":" + port
-		user = os.Getenv("TEST_DB_USER")
-		passwd = os.Getenv("TEST_DB_USER_PASSWORD")
-		dbName = os.Getenv("TEST_DB_NAME")
+		user = os.Getenv("TEST_RDB_USER")
+		passwd = os.Getenv("TEST_RDB_USER_PASSWORD")
+		dbName = os.Getenv("TEST_RDB_NAME")
 	} else {
-		address = os.Getenv("DB_ADDRESS")
-		port = os.Getenv("DB_PORT")
+		address = os.Getenv("RDB_ADDRESS")
+		port = os.Getenv("RDB_PORT")
 		addr = address + ":" + port
-		user = os.Getenv("DB_USER")
-		passwd = os.Getenv("DB_USER_PASSWORD")
-		dbName = os.Getenv("DB_NAME")
+		user = os.Getenv("RDB_USER")
+		passwd = os.Getenv("RDB_USER_PASSWORD")
+		dbName = os.Getenv("RDB_NAME")
 	}
 
 	log.Println("RDB config is below.")
