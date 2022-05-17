@@ -21,6 +21,6 @@ func main() {
 
 	db := database.NewDB(false)
 	s := short.NewShort(db.IsExistShortUrl)
-	api := api.NewAPI(s, db)
+	api := api.NewAPI(s, db, port)
 	api.Run(port)
 }

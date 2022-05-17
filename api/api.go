@@ -1,21 +1,40 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"one-shot-url/database"
 	"one-shot-url/short"
+	"os"
 	"strconv"
 )
 
-func NewAPI(short short.Shorter, db database.Interactor) API {
+func NewAPI(short short.Shorter, db database.Interactor, port int) API {
 	gin.DefaultWriter = log.Writer()
 	r := gin.Default()
+
+	domain := os.Getenv("DOMAIN")
+	protocol := os.Getenv("PROTOCOL")
+	if domain == "" {
+		log.Fatal("can not get a domain that is environment value. Did you modify .env?")
+	}
+	if protocol == "" {
+		log.Fatal("can not get a domain that is environment value. Did you modify .env?")
+	}
+	if protocol != "https" && protocol != "http" {
+		log.Fatalf("the protocol(%v)is not supported.\n", protocol)
+	}
+	isDefaultPort := (protocol == "http" && port == 80) || (protocol == "https" && port == 443)
 	api := API{
-		r:          r,
-		Shorter:    short,
-		Interactor: db,
+		r:             r,
+		Shorter:       short,
+		Interactor:    db,
+		Domain:        domain,
+		Protocol:      protocol,
+		Port:          port,
+		IsDefaultPort: isDefaultPort,
 	}
 	api.setRoute()
 	return api
@@ -25,6 +44,10 @@ type API struct {
 	r *gin.Engine
 	short.Shorter
 	database.Interactor
+	Domain        string
+	Protocol      string
+	Port          int
+	IsDefaultPort bool
 }
 
 func (api API) short(c *gin.Context) {
@@ -45,13 +68,18 @@ func (api API) short(c *gin.Context) {
 		return
 	}
 
-	short := api.Shorter.Generate()
-	err = api.Interactor.Store(req.Url, short)
+	code := api.Shorter.Generate()
+	err = api.Interactor.Store(req.Url, code)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, map[string]string{"message": "server error."})
 		return
 	}
-	c.JSON(http.StatusOK, map[string]string{"short_url": short})
+	domainAndPort := fmt.Sprintf("%v:%v", api.Domain, api.Port)
+	if api.IsDefaultPort {
+		domainAndPort = api.Domain
+	}
+	shortURL := fmt.Sprintf("%v://%v/%v", api.Protocol, domainAndPort, code)
+	c.JSON(http.StatusOK, map[string]string{"short_url": shortURL})
 }
 
 func (api API) decrypt(c *gin.Context) {
