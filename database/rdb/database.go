@@ -112,32 +112,3 @@ func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
 func (d DB) GetDB() *sql.DB {
 	return d.db
 }
-
-func (d DB) createTable(tableName string) error {
-	// SQL インジェクション が行える可能性があるため後ほど確認 or 書き換えましょう
-	query := "CREATE TABLE " + tableName + " (id int NOT NULL PRIMARY KEY AUTO_INCREMENT, long_url varchar(1000), short_url VARCHAR(100), updated_at DATETIME, created_at DATETIME, deleted_at DATETIME)"
-	_, err := d.db.Exec(query)
-
-	if err != nil {
-		log.Println("tableName is " + tableName + ", err is " + err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (d DB) makeTableName(shortURL string) string {
-	tableNameHead := shortURL[0:2]
-	tableName := tableNameHead + "_urls"
-	return tableName
-}
-
-func (d DB) isExistTable(tableName string) bool {
-	query := "SELECT id FROM " + tableName + " LIMIT 1;"
-	_, err := d.db.Exec(query)
-	if err != nil {
-		log.Println(tableName + " is not exist")
-		return false
-	}
-	return true
-}
