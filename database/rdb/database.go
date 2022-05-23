@@ -66,7 +66,7 @@ func NewRDB(isTest bool) Interactor {
 	go func() {
 		for {
 			b.BulkInsert(db)
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 2)
 		}
 	}()
 	return DB{
@@ -116,7 +116,12 @@ func (d DB) IsExistShortUrl(shortURL string) bool {
 		log.Println(err.Error())
 		return false
 	}
-	return row.Next()
+	if row.Next() {
+		return true
+	} else {
+		log.Println("id conflict!")
+		return false
+	}
 }
 
 func (d DB) GetDB() *sql.DB {
