@@ -20,7 +20,7 @@ func main() {
 	}
 
 	db := rdb.NewRDB(false)
-	s := short.NewShort(db.IsExistShortUrl)
+	s := short.NewShort()
 	api := api.NewAPI(s, db, port)
 	api.Run(port)
 }

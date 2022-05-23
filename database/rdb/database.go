@@ -15,7 +15,6 @@ type Interactor interface {
 	Store(longURL string, shortURL string) error
 	SearchLongURL(shortURL string) (longURL string, err error)
 	GetDB() *sql.DB
-	IsExistShortUrl(shortURL string) bool
 }
 
 func NewRDB(isTest bool) Interactor {
@@ -108,20 +107,6 @@ func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
 	}
 
 	return longURL, nil
-}
-
-func (d DB) IsExistShortUrl(shortURL string) bool {
-	row, err := sq.Select("long_url").From("urls").Where("short_url = ?", shortURL).Limit(1).RunWith(d.db).Query()
-	if err != nil {
-		log.Println(err.Error())
-		return false
-	}
-	if row.Next() {
-		return true
-	} else {
-		log.Println("id conflict!")
-		return false
-	}
 }
 
 func (d DB) GetDB() *sql.DB {

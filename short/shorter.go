@@ -9,28 +9,22 @@ type Shorter interface {
 	Generate() string
 }
 
-func NewShort(isExist func(string) bool) Shorter {
+func NewShort() Shorter {
 	k := ksuid.New()
 	s := Short{
-		isExist: isExist,
-		k:       k,
+		k: k,
 	}
 	return &s
 }
 
 type Short struct {
-	isExist func(shortURL string) bool
-	k       ksuid.KSUID
+	k ksuid.KSUID
 }
 
 func (s *Short) Generate() string {
-	for {
-		s.k = ksuid.New()
-		randomId := s.k.String()
-		log.Println("randomID is " + randomId)
-		short := randomId[0:8]
-		if !s.isExist(short) {
-			return short
-		}
-	}
+	s.k = ksuid.New()
+	randomId := s.k.String()
+	log.Println("randomID is " + randomId)
+	code := randomId[0:8]
+	return code
 }
