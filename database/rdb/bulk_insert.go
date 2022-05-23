@@ -14,8 +14,11 @@ type bulkInserter struct {
 }
 
 type urlSchema struct {
-	ShortURL string
-	LongURL  string
+	ShortURL  string
+	LongURL   string
+	UpdatedAt *time.Time
+	CreatedAt *time.Time
+	DeletedAt *time.Time
 }
 
 func newBulkInserter() *bulkInserter {
@@ -24,7 +27,12 @@ func newBulkInserter() *bulkInserter {
 }
 
 func (b *bulkInserter) BulkInsert(db *sql.DB) {
+	log.Println("in BulkInsert function")
 	b.urlMu.Lock()
+	if len(b.urlSchemas) == 0 {
+		b.urlMu.Unlock()
+		return
+	}
 
 	insertQuery := sq.Insert("urls").Columns("long_url", "short_url", "updated_at", "created_at", "deleted_at")
 
@@ -35,12 +43,13 @@ func (b *bulkInserter) BulkInsert(db *sql.DB) {
 	if err != nil {
 		log.Println(err.Error())
 	}
-	b.urlSchemas = nil
+	b.urlSchemas = []urlSchema{}
 	b.urlMu.Unlock()
 }
 
 func (b *bulkInserter) AppendUrlSchema(schema urlSchema) {
 	b.urlMu.Lock()
+	log.Println("append url schema")
 	b.urlSchemas = append(b.urlSchemas, schema)
 	b.urlMu.Unlock()
 }

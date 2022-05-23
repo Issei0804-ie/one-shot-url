@@ -62,32 +62,39 @@ func NewRDB(isTest bool) Interactor {
 	}
 
 	log.Println("connected RDB.")
-	return DB{db: db}
+	b := newBulkInserter()
+	go func() {
+		for {
+			b.BulkInsert(db)
+			time.Sleep(time.Second * 3)
+		}
+	}()
+	return DB{
+		db:   db,
+		bulk: b,
+	}
 }
 
 type DB struct {
-	db *sql.DB
+	db   *sql.DB
+	bulk *bulkInserter
 }
 
 func (d DB) Store(longURL string, shortURL string) error {
-	tableName := d.makeTableName(shortURL)
-	if !d.isExistTable(tableName) {
-		err := d.createTable(tableName)
-		if err != nil {
-			return err
-		}
+	now := time.Now()
+	schema := urlSchema{
+		ShortURL:  shortURL,
+		LongURL:   longURL,
+		UpdatedAt: &now,
+		CreatedAt: &now,
+		DeletedAt: nil,
 	}
-	_, err := sq.Insert(tableName).Columns("long_url", "short_url", "updated_at", "created_at", "deleted_at").
-		Values(longURL, shortURL, time.Now(), time.Now(), nil).RunWith(d.db).Exec()
-	if err != nil {
-		return err
-	}
+	d.bulk.AppendUrlSchema(schema)
 	return nil
 }
 
 func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
-	tableName := d.makeTableName(shortURL)
-	row, err := sq.Select("long_url").From(tableName).Where("short_url = ?", shortURL).RunWith(d.db).Query()
+	row, err := sq.Select("long_url").From("urls").Where("short_url = ?", shortURL).RunWith(d.db).Query()
 	if err != nil {
 		return "", err
 	}
@@ -104,8 +111,7 @@ func (d DB) SearchLongURL(shortURL string) (longURL string, err error) {
 }
 
 func (d DB) IsExistShortUrl(shortURL string) bool {
-	tableName := d.makeTableName(shortURL)
-	row, err := sq.Select("long_url").From(tableName).Where("short_url = ?", shortURL).Limit(1).RunWith(d.db).Query()
+	row, err := sq.Select("long_url").From("urls").Where("short_url = ?", shortURL).Limit(1).RunWith(d.db).Query()
 	if err != nil {
 		log.Println(err.Error())
 		return false
