@@ -19,10 +19,6 @@ services:
       - TZ=Asia/Tokyo
     tty: true
 
-  redis:
-    image: redis:latest
-    container_name: redis
-
   backend:
     build: ./
     container_name: go-api
